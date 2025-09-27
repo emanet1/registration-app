@@ -64,7 +64,17 @@ class TokenData(BaseModel):
 fake_users_db = {}
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        # Try bcrypt first
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception:
+        # Fallback to SHA256 verification
+        import hashlib
+        if isinstance(plain_password, str):
+            plain_password = plain_password.encode('utf-8')
+        if len(plain_password) > 72:
+            plain_password = plain_password[:72]
+        return hashlib.sha256(plain_password).hexdigest() == hashed_password
 
 def get_password_hash(password):
     # Truncate password to 72 bytes max for bcrypt compatibility
